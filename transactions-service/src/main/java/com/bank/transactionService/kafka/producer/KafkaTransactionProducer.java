@@ -1,8 +1,9 @@
-package com.bank.transactionService.service;
+package com.bank.transactionservice.kafka.producer;
 
-import com.bank.transactionService.model.transaction.TransactionRequestedEvent;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+
+import com.bank.transactionservice.event.TransactionRequestedEvent;
 
 @Service
 public class KafkaTransactionProducer {

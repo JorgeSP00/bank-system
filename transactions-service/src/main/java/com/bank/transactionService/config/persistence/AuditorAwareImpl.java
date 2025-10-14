@@ -1,4 +1,4 @@
-package com.bank.transactionService.config;
+package com.bank.transactionservice.config.persistence;
 
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.stereotype.Component;

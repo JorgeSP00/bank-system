@@ -1,6 +1,7 @@
-package com.bank.transactionService.service;
+package com.bank.transactionservice.kafka.consumer;
 
-import com.bank.transactionService.model.transaction.TransactionCompletedRequestedEvent;
+import com.bank.transactionservice.event.TransactionCompletedRequestedEvent;
+import com.bank.transactionservice.service.TransactionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

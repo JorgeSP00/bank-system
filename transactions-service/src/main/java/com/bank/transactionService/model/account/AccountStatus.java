@@ -1,4 +1,4 @@
-package com.bank.transactionService.model.account;
+package com.bank.transactionservice.model.account;
 
 public enum AccountStatus {
     ACTIVE,

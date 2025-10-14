@@ -1,4 +1,4 @@
-package com.bank.transactionService.model.transaction;
+package com.bank.transactionservice.model.transaction;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -9,7 +9,8 @@ import lombok.experimental.SuperBuilder;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import com.bank.transactionService.model.BaseEntity;
+import com.bank.transactionservice.model.BaseEntity;
+import com.bank.transactionservice.model.account.Account;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Getter
@@ -20,11 +21,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @NoArgsConstructor
 public class Transaction extends BaseEntity {
 
-    @Column(nullable = false)
-    private UUID fromAccountId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "from_account_id", nullable = false, updatable = false)
+    private Account fromAccount;
 
-    @Column(nullable = false)
-    private UUID toAccountId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "to_account_id", nullable = false, updatable = false)
+    private Account toAccount;
 
     @Column(nullable = false)
     private BigDecimal amount;

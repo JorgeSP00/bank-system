@@ -1,7 +1,8 @@
-package com.bank.transactionService.model.transaction;
+package com.bank.transactionservice.dto.request;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+
+import com.bank.transactionservice.model.transaction.TransactionType;
 
 import lombok.*;
 
@@ -11,11 +12,10 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransactionDTO {
+public class TransactionRequestDTO {
     private String fromAccountNumber;
     private String toAccountNumber;
     private BigDecimal amount;
-    private String type;
+    private TransactionType type;
     private String description;
-    private LocalDateTime createdAt;
 }

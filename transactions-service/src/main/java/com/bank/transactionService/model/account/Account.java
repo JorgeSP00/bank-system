@@ -1,8 +1,8 @@
-package com.bank.transactionService.model.account;
+package com.bank.transactionservice.model.account;
 
 import java.util.UUID;
 
-import com.bank.transactionService.model.BaseEntity;
+import com.bank.transactionservice.model.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.persistence.*;

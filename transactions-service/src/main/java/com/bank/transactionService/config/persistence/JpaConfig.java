@@ -1,4 +1,4 @@
-package com.bank.transactionService.config;
+package com.bank.transactionservice.config.persistence;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;

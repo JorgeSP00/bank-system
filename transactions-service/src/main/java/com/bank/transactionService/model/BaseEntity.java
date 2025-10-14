@@ -1,4 +1,4 @@
-package com.bank.transactionService.model;
+package com.bank.transactionservice.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;

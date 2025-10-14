@@ -2,7 +2,7 @@ package com.bank.accountService.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.bank.accountService.model.Account;
+import com.bank.accountService.model.account.Account;
 
 import java.util.Optional;
 import java.util.UUID;

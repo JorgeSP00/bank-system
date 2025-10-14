@@ -1,4 +1,4 @@
-package com.bank.transactionService.model.DTO;
+package com.bank.transactionService.model.transaction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

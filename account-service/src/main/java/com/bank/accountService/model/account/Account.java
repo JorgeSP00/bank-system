@@ -1,4 +1,4 @@
-package com.bank.accountService.model;
+package com.bank.accountService.model.account;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,6 +9,9 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+
+import com.bank.accountService.model.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Builder
 @AllArgsConstructor
@@ -28,6 +31,7 @@ public class Account extends BaseEntity {
     @Column(nullable = false)
     private BigDecimal balance;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccountStatus status;    

@@ -1,4 +1,4 @@
-package com.bank.accountService.model.DTO;
+package com.bank.accountService.model.account;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,8 +9,6 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
-import com.bank.accountService.model.AccountStatus;
 
 @Data
 @Builder

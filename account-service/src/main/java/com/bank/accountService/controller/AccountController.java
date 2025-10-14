@@ -9,13 +9,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.bank.accountService.model.DTO.AccountDTO;
+import com.bank.accountService.model.account.Account;
+import com.bank.accountService.model.account.AccountDTO;
+import com.bank.accountService.model.account.AccountRequestedEvent;
 import com.bank.accountService.service.AccountService;
 
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -23,25 +26,33 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AccountController {
 
-    private final AccountService service;
+    private final AccountService accountService;
 
     @GetMapping
     public List<AccountDTO> getAll() {
-        return service.findAllAccounts();
+        List<AccountDTO> allAccounts = accountService.findAllAccounts()
+            .stream()
+            .map(t -> accountService.accountToDto(t))
+            .collect(Collectors.toList());
+        return allAccounts;
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<AccountDTO> getAccountById(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.getAccountById(id));
+        return ResponseEntity.ok(accountService.accountToDto(accountService.getAccountById(id)));
     }
 
     @PostMapping
     public ResponseEntity<AccountDTO> createAccount(@RequestBody AccountDTO dto) {
-        return ResponseEntity.ok(service.createOrUpdateAccount(dto));
+        Account account = accountService.createOrUpdateAccount(dto);
+        accountService.sendAccountRequested(
+            new AccountRequestedEvent(account.getId(), account.getAccountNumber(), account.getStatus(), account.getVersionId())
+        );
+        return ResponseEntity.ok(accountService.accountToDto(account));
     }
 
     @PutMapping
     public ResponseEntity<AccountDTO> updateAccount(@RequestBody AccountDTO dto) {
-        return ResponseEntity.ok(service.createOrUpdateAccount(dto));
+        return ResponseEntity.ok(accountService.accountToDto(accountService.createOrUpdateAccount(dto)));
     }
 }

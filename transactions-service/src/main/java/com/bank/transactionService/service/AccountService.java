@@ -3,8 +3,9 @@ package com.bank.transactionService.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import com.bank.transactionService.model.Account;
-import com.bank.transactionService.model.DTO.AccountDTO;
+import com.bank.transactionService.model.account.Account;
+import com.bank.transactionService.model.account.AccountDTO;
+import com.bank.transactionService.model.account.AccountProcessedEvent;
 import com.bank.transactionService.repository.AccountRepository;
 
 import jakarta.transaction.Transactional;
@@ -29,9 +30,8 @@ public class AccountService {
     /**
      * Recupera una cuenta por su accountNumber.
      */
-    public AccountDTO getByAccountNumber(String accountNumber) {
+    public Account getByAccountNumber(String accountNumber) {
         return accountRepository.findByAccountNumber(accountNumber)
-                .map(this::accountToDto)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
     }
 
@@ -41,19 +41,17 @@ public class AccountService {
      * Seguramente tenga que cambiar esto para que me haga con los datos que le traigo del kafka y no con los del dto
      */
     @Transactional
-    public AccountDTO saveOrUpdate(AccountDTO dto) {
+    public AccountDTO saveOrUpdateDTO(AccountDTO dto) {
         Optional<Account> existing = accountRepository.findByAccountNumber(dto.getAccountNumber());
 
         Account account;
         if (existing.isPresent()) {
             account = existing.get();
             //Revisar que actualice la versión.
-            account.setOwnerName(dto.getOwnerName());
             account.setStatus(dto.getStatus());
         } else {
             account = Account.builder()
                     .accountNumber(dto.getAccountNumber())
-                    .ownerName(dto.getOwnerName())
                     .status(dto.getStatus())
                     .build();
         }
@@ -62,10 +60,37 @@ public class AccountService {
         return accountToDto(saved);
     }
 
-    private AccountDTO accountToDto(Account a) {
+    /**
+     * Crea o actualiza la copia local de la cuenta.
+     * Seguramente tenga que cambiar esto para que me haga con los datos que le traigo del kafka y no con los del dto
+     */
+    @Transactional
+    public Account saveOrUpdateFromConsumer(AccountProcessedEvent accountProcessedEvent) {
+        Optional<Account> existing = accountRepository.findById(accountProcessedEvent.accountId());
+
+        Account account;
+        if (existing.isPresent()) {
+            account = existing.get();
+            //Revisar que actualice la versión.
+            account.setAccountNumber(accountProcessedEvent.accountNumber());
+            account.setStatus(accountProcessedEvent.status());
+            account.setVersionId(accountProcessedEvent.version());
+        } else {
+            account = Account.builder()
+                    .accountNumber(accountProcessedEvent.accountNumber())
+                    .status(accountProcessedEvent.status())
+                    .versionId(accountProcessedEvent.version())
+                    .id(accountProcessedEvent.accountId())
+                    .build();
+        }
+
+        Account saved = accountRepository.save(account);
+        return saved;
+    }
+
+    public AccountDTO accountToDto(Account a) {
         return AccountDTO.builder()
                 .accountNumber(a.getAccountNumber())
-                .ownerName(a.getOwnerName())
                 .status(a.getStatus())
                 .build();
     }

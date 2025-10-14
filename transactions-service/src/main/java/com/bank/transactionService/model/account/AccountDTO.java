@@ -1,4 +1,4 @@
-package com.bank.transactionService.model.DTO;
+package com.bank.transactionService.model.account;
 
 import lombok.*;
 
@@ -10,6 +10,5 @@ import lombok.*;
 @NoArgsConstructor
 public class AccountDTO {
     private String accountNumber;
-    private String ownerName;
-    private String status;
+    private AccountStatus status;
 }

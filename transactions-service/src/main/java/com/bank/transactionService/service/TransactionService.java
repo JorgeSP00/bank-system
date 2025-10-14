@@ -3,10 +3,13 @@ package com.bank.transactionService.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import com.bank.transactionService.model.Account;
-import com.bank.transactionService.model.Transaction;
-import com.bank.transactionService.model.TransactionType;
-import com.bank.transactionService.model.DTO.TransactionDTO;
+import com.bank.transactionService.model.account.Account;
+import com.bank.transactionService.model.transaction.Transaction;
+import com.bank.transactionService.model.transaction.TransactionCompletedRequestedEvent;
+import com.bank.transactionService.model.transaction.TransactionDTO;
+import com.bank.transactionService.model.transaction.TransactionRequestedEvent;
+import com.bank.transactionService.model.transaction.TransactionStatus;
+import com.bank.transactionService.model.transaction.TransactionType;
 import com.bank.transactionService.repository.AccountRepository;
 import com.bank.transactionService.repository.TransactionRepository;
 
@@ -20,27 +23,27 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
+    private final KafkaTransactionProducer kafkaTransactionProducer;
 
-    public List<TransactionDTO> getAllTransactions() {
+    public List<Transaction> getAllTransactions() {
         return transactionRepository.findAll()
                 .stream()
-                .map(this::transactionToDto)
                 .collect(Collectors.toList());
     }
 
-    public TransactionDTO getTransactionById(UUID id) {
+    public Transaction getTransactionById(UUID id) {
         return transactionRepository.findById(id)
-                .map(this::transactionToDto)
                 .orElseThrow(() -> new RuntimeException("Transaction not found"));
     }
 
-    public TransactionDTO createTransaction(TransactionDTO dto) {
+    public Transaction createTransaction(TransactionDTO dto) {
         Transaction t = new Transaction();
         Account fromAccount = accountRepository.findByAccountNumber(dto.getFromAccountNumber())
                 .orElseThrow(() -> new IllegalArgumentException("Cuenta origen no encontrada"));
 
         Account toAccount = accountRepository.findByAccountNumber(dto.getToAccountNumber())
                 .orElseThrow(() -> new IllegalArgumentException("Cuenta destino no encontrada"));
+        t.setId(UUID.randomUUID());
         t.setFromAccountId(fromAccount.getId());
         t.setToAccountId(toAccount.getId());
         t.setFromAccountVersionId(fromAccount.getVersionId());
@@ -48,12 +51,14 @@ public class TransactionService {
         t.setAmount(dto.getAmount());
         t.setType(TransactionType.valueOf(dto.getType().toUpperCase()));
         t.setDescription(dto.getDescription());
+        t.setStatus(TransactionStatus.PENDING);
+        t.setObservations("Transacción empezada");
         Transaction saved = transactionRepository.save(t);
-        return transactionToDto(saved);
+        return saved;
     }
 
     // 🔁 Métodos de conversión
-    private TransactionDTO transactionToDto(Transaction t) {
+    public TransactionDTO transactionToDto(Transaction t) {
         String fromAccountNumber = accountRepository.findById(t.getFromAccountId())
                 .map(Account::getAccountNumber)
                 .orElse("UNKNOWN");
@@ -70,5 +75,16 @@ public class TransactionService {
                 .description(t.getDescription())
                 .createdAt(t.getCreatedAt())
                 .build();
+    }
+
+    public void sendTransactionRequested(TransactionRequestedEvent transactionRequestedEvent) {
+        kafkaTransactionProducer.sendTransactionRequested(transactionRequestedEvent);
+    }
+
+    public void updateTransaction(TransactionCompletedRequestedEvent transactionCompleted) {
+        Transaction transaction = getTransactionById(transactionCompleted.transactionId());
+        transaction.setStatus(transactionCompleted.transactionStatus());
+        transaction.setObservations(transactionCompleted.observations());
+        transactionRepository.save(transaction);
     }
 }

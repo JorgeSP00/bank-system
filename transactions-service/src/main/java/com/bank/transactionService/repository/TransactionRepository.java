@@ -2,7 +2,7 @@ package com.bank.transactionService.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.bank.transactionService.model.Transaction;
+import com.bank.transactionService.model.transaction.Transaction;
 
 import java.util.List;
 import java.util.UUID;

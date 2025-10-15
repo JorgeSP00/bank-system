@@ -1,6 +1,8 @@
-package com.bank.accountService.model.account;
+package com.bank.accountservice.event;
 
 import java.util.UUID;
+
+import com.bank.accountservice.model.account.AccountStatus;
 
 public record AccountRequestedEvent(
     UUID accountId,

@@ -1,12 +1,12 @@
-package com.bank.accountService.service;
+package com.bank.accountservice.kafka.producer;
 
-
-import com.bank.accountService.model.transaction.TransactionCompletedRequestedEvent;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+
+import com.bank.accountservice.event.TransactionCompletedRequestedEvent;
 
 @Service
 @RequiredArgsConstructor

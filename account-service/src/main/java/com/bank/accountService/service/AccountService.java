@@ -1,13 +1,17 @@
-package com.bank.accountService.service;
+package com.bank.accountservice.service;
 
-import com.bank.accountService.model.account.Account;
-import com.bank.accountService.model.account.AccountDTO;
-import com.bank.accountService.model.account.AccountRequestedEvent;
-import com.bank.accountService.model.account.AccountStatus;
-import com.bank.accountService.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
+
+import com.bank.accountservice.dto.request.AccountRequestDTO;
+import com.bank.accountservice.dto.response.AccountResponseDTO;
+import com.bank.accountservice.event.AccountRequestedEvent;
+import com.bank.accountservice.kafka.producer.KafkaAccountProducer;
+import com.bank.accountservice.mapper.AccountMapper;
+import com.bank.accountservice.model.account.Account;
+import com.bank.accountservice.model.account.AccountStatus;
+import com.bank.accountservice.repository.AccountRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,18 +26,32 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
 
-    public List<Account> findAllAccounts() {
+    private final AccountMapper accountMapper;
+
+    public List<AccountResponseDTO> findAllAccounts() {
         return accountRepository.findAll()
                 .stream()
+                .map(accountMapper::fromEntityToResponse)
                 .collect(Collectors.toList());
     }
 
-    public Account getAccountById(UUID id) {
-        return accountRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+    public AccountResponseDTO getAccountResponseDTOById(UUID id) {
+        return accountMapper.fromEntityToResponse(getAccountById(id));
     }
 
-    public Account createOrUpdateAccount(AccountDTO dto) {
+    public Account getAccountById(UUID id) {
+        Account a = accountRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+        return a;
+    }
+
+    public AccountResponseDTO createOrUpdateAccountResponseDTO(AccountRequestDTO dto) {
+        Account a = createOrUpdateAccount(dto);
+        sendAccountRequested(accountMapper.fromEntityToMessage(a));
+        return accountMapper.fromEntityToResponse(createOrUpdateAccount(dto));
+    }
+
+    private Account createOrUpdateAccount(AccountRequestDTO dto) {
         Optional<Account> existing = accountRepository.findByAccountNumber(dto.getAccountNumber());
 
         Account account;
@@ -53,8 +71,6 @@ public class AccountService {
                 .status(AccountStatus.ACTIVE)
                 .build();
         }
-        
-
         Account saved = accountRepository.save(account);
         return saved;
     }
@@ -64,18 +80,7 @@ public class AccountService {
         return saved;
     }
 
-    // 🔁 Conversión entidad <-> DTO
-    public AccountDTO accountToDto(Account a) {
-        return AccountDTO.builder()
-                .accountNumber(a.getAccountNumber())
-                .ownerName(a.getOwnerName())
-                .balance(a.getBalance())
-                .createdAt(a.getCreatedAt())
-                .status(a.getStatus())
-                .build();
-    }
-
-    public void sendAccountRequested(AccountRequestedEvent accountRequestedEvent) {
+    private void sendAccountRequested(AccountRequestedEvent accountRequestedEvent) {
         kafkaAccountProducer.sendAccountRequested(accountRequestedEvent);
     }
 }

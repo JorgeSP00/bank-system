@@ -1,4 +1,4 @@
-package com.bank.accountService.model.transaction;
+package com.bank.accountservice.model.transaction;
 
 public enum TransactionStatus {
     CORRECT,

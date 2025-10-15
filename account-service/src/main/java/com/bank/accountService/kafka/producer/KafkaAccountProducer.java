@@ -1,9 +1,10 @@
-package com.bank.accountService.service;
+package com.bank.accountservice.kafka.producer;
 
 
-import com.bank.accountService.model.account.AccountRequestedEvent;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+
+import com.bank.accountservice.event.AccountRequestedEvent;
 
 @Service
 public class KafkaAccountProducer {

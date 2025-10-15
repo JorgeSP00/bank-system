@@ -1,12 +1,13 @@
-package com.bank.accountService.service;
+package com.bank.accountservice.service;
 
 import org.springframework.stereotype.Service;
 
-import com.bank.accountService.model.account.Account;
-import com.bank.accountService.model.account.AccountStatus;
-import com.bank.accountService.model.transaction.TransactionCompletedRequestedEvent;
-import com.bank.accountService.model.transaction.TransactionProcessedEvent;
-import com.bank.accountService.model.transaction.TransactionStatus;
+import com.bank.accountservice.event.TransactionCompletedRequestedEvent;
+import com.bank.accountservice.kafka.producer.KafkaTransactionCompletedProducer;
+import com.bank.accountservice.model.account.Account;
+import com.bank.accountservice.model.account.AccountStatus;
+import com.bank.accountservice.model.transaction.TransactionProcessedEvent;
+import com.bank.accountservice.model.transaction.TransactionStatus;
 
 import lombok.RequiredArgsConstructor;
 

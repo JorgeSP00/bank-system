@@ -1,4 +1,4 @@
-package com.bank.accountService.model.account;
+package com.bank.accountservice.model.account;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import com.bank.accountService.model.BaseEntity;
+import com.bank.accountservice.model.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Builder

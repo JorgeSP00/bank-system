@@ -1,4 +1,4 @@
-package com.bank.accountService.config;
+package com.bank.accountservice.config.persistence;
 
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.stereotype.Component;

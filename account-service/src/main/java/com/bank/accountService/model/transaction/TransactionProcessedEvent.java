@@ -1,4 +1,4 @@
-package com.bank.accountService.model.transaction;
+package com.bank.accountservice.model.transaction;
 
 import java.math.BigDecimal;
 import java.util.UUID;

@@ -50,7 +50,7 @@ public class TransactionService {
         Account toAccount = accountService.getByAccountNumber(transactionRequestDTO.getToAccountNumber());
         if (!fromAccount.getStatus().equals(AccountStatus.ACTIVE) || !toAccount.getStatus().equals(AccountStatus.ACTIVE)) {
             //error
-            new RuntimeException("Accounts not available");
+            throw new RuntimeException("Accounts not available");
         }
         Transaction t = transactionMapper.fromRequestToEntity(transactionRequestDTO);
         t.setId(UUID.randomUUID());

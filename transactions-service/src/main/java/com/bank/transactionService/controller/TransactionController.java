@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/bank_system/transactionserive/transactions")
+@RequestMapping("/bank_system/transactionservice/transactions/")
 @RequiredArgsConstructor
 public class TransactionController {
 
@@ -24,7 +24,7 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.getAllTransactions());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("{id}")
     public ResponseEntity<TransactionResponseDTO> getTransactionById(@PathVariable UUID id) {
         return ResponseEntity.ok(transactionService.getTransactionById(id));
     }

@@ -33,4 +33,4 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       group-id: transaction-service-group
       properties:
-        spring.json.trusted.packages: "com.bank.accountService.model.account"
+        spring.json.trusted.packages: "com.bank.accountservice.event"

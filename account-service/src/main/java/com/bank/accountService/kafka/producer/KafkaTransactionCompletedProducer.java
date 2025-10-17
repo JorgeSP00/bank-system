@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import com.bank.accountservice.event.TransactionCompletedRequestedEvent;
+import com.bank.accountservice.event.producer.TransactionCompletedRequestedEvent;
 
 @Service
 @RequiredArgsConstructor

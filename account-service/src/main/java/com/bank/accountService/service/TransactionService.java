@@ -1,12 +1,13 @@
 package com.bank.accountservice.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.bank.accountservice.event.TransactionCompletedRequestedEvent;
+import com.bank.accountservice.event.consumer.TransactionProcessedEvent;
+import com.bank.accountservice.event.producer.TransactionCompletedRequestedEvent;
 import com.bank.accountservice.kafka.producer.KafkaTransactionCompletedProducer;
 import com.bank.accountservice.model.account.Account;
 import com.bank.accountservice.model.account.AccountStatus;
-import com.bank.accountservice.model.transaction.TransactionProcessedEvent;
 import com.bank.accountservice.model.transaction.TransactionStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class TransactionService {
     private final AccountService accountService;
     private final KafkaTransactionCompletedProducer kafkaTransactionProducer;
 
+    @Transactional
     public void doTransaction(TransactionProcessedEvent transactionProcessedEvent) {
         TransactionStatus transactionState;
         Account fromAccount = accountService.getAccountById(transactionProcessedEvent.fromAccountId());
@@ -42,9 +44,8 @@ public class TransactionService {
     private boolean updateAccounts (TransactionProcessedEvent transactionProcessedEvent, Account fromAccount, Account toAccount) {
         fromAccount.setBalance(fromAccount.getBalance().subtract(transactionProcessedEvent.amount()));
         toAccount.setBalance(toAccount.getBalance().add(transactionProcessedEvent.amount()));
-
-        accountService.createOrUpdateAccount(fromAccount);
-        accountService.createOrUpdateAccount(toAccount);
+        accountService.updateAccount(fromAccount);
+        accountService.updateAccount(toAccount);
         return true;
     }
 

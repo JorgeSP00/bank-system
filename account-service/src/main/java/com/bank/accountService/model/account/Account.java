@@ -43,4 +43,9 @@ public class Account extends BaseEntity {
     public void prePersist() {
         versionId = UUID.randomUUID();
     }
+
+    @PreUpdate
+    public void preUpdate() {
+        versionId = UUID.randomUUID();
+    }
 }

@@ -2,6 +2,7 @@ package com.bank.transactionservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bank.transactionservice.dto.request.TransactionRequestDTO;
 import com.bank.transactionservice.dto.response.TransactionResponseDTO;
@@ -39,6 +40,8 @@ public class TransactionService {
                 .orElseThrow(() -> new RuntimeException("Transaction not found"));
         return transactionMapper.fromEntityToResponse(t);
     }
+
+    @Transactional
     public TransactionResponseDTO createTransaction(TransactionRequestDTO transactionRequestDTO) {
         Transaction t = validateTransaction(transactionRequestDTO);
         sendTransactionRequested(transactionMapper.fromTransactionToMessage(t));

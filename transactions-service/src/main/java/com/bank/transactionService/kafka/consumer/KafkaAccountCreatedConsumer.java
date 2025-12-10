@@ -10,23 +10,18 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class KafkaAccountConsumer {
+public class KafkaAccountCreatedConsumer {
     
     private final AccountService accountService;
 
-    /**
-     * Este consumer se mantiene para compatibilidad con otros eventos de accounts
-     * Los eventos específicos de CREATE/UPDATE son manejados por:
-     * - KafkaAccountCreatedConsumer
-     * - KafkaAccountUpdatedConsumer
-     */
     @KafkaListener(
-        topics = "account.requested", 
+        topics = "account.created", 
         groupId = "transaction-service-group",
         containerFactory = "accountProcessedEventKafkaListenerContainerFactory"
     )
-    public void consume(AccountProcessedEvent event) {
-        System.out.println("📩 [Consumer] Received AccountProcessedEvent (fallback): " + event);
-        accountService.saveOrUpdateFromConsumer(event);
+    public void consumeAccountCreated(AccountProcessedEvent event) {
+        System.out.println("✅ [Consumer] Received AccountCreatedEvent: " + event);
+        accountService.createAccountFromConsumer(event);
+        System.out.println("✅ [Consumer] Account created successfully");
     }
 }

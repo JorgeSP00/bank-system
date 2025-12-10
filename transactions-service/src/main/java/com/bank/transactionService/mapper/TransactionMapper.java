@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 import com.bank.transactionservice.dto.request.TransactionRequestDTO;
 import com.bank.transactionservice.dto.response.TransactionResponseDTO;
-import com.bank.transactionservice.event.TransactionRequestedEvent;
+import com.bank.transactionservice.event.producer.TransactionRequestedEvent;
 import com.bank.transactionservice.model.transaction.Transaction;
 
 @Component

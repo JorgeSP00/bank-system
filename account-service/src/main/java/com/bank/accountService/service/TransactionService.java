@@ -1,14 +1,19 @@
 package com.bank.accountservice.service;
 
+import java.util.Map;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bank.accountservice.event.consumer.TransactionProcessedEvent;
-import com.bank.accountservice.event.producer.TransactionCompletedRequestedEvent;
-import com.bank.accountservice.kafka.producer.KafkaTransactionCompletedProducer;
+import com.bank.accountservice.exception.EventSerializationException;
 import com.bank.accountservice.model.account.Account;
 import com.bank.accountservice.model.account.AccountStatus;
 import com.bank.accountservice.model.transaction.TransactionStatus;
+import com.bank.accountservice.model.outbox.OutboxEvent;
+import com.bank.accountservice.repository.OutboxEventRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,7 +21,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TransactionService {
     private final AccountService accountService;
-    private final KafkaTransactionCompletedProducer kafkaTransactionProducer;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public void doTransaction(TransactionProcessedEvent transactionProcessedEvent) {
@@ -50,6 +56,24 @@ public class TransactionService {
     }
 
     private void completeTransaction(TransactionProcessedEvent transactionProcessedEvent, TransactionStatus transactionState) {
-        kafkaTransactionProducer.sendTransactionConfirmedRequested(new TransactionCompletedRequestedEvent(transactionProcessedEvent.transactionId(), transactionState, "null"));
+        OutboxEvent outboxEvent;
+        try {
+            Map<String, Object> payload = Map.of(
+                "transactionId", transactionProcessedEvent.transactionId().toString(),
+                "transactionStatus", transactionState.name(),
+                "observations", "null"
+            );
+            String payloadJson = objectMapper.writeValueAsString(payload);
+            outboxEvent = OutboxEvent.builder()
+                .aggregateType("Transaction")
+                .aggregateId(transactionProcessedEvent.transactionId())
+                .type("TransactionCompletedRequestedEvent")
+                .topic("transaction.completed")
+                .payload(payloadJson)
+                .build();
+        } catch (JsonProcessingException e) {
+            throw new EventSerializationException("Failed to serialize TransactionCompletedRequestedEvent", e);
+        }
+        outboxEventRepository.save(outboxEvent);
     }
 }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import com.bank.transactionservice.dto.request.TransactionRequestDTO;
 import com.bank.transactionservice.dto.response.TransactionResponseDTO;
@@ -30,7 +31,7 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<TransactionResponseDTO> createTransaction(@RequestBody TransactionRequestDTO transactionRequestDTO) throws Exception {
+    public ResponseEntity<TransactionResponseDTO> createTransaction(@Valid @RequestBody TransactionRequestDTO transactionRequestDTO) throws Exception {
         TransactionResponseDTO t = transactionService.createTransaction(transactionRequestDTO);
         return ResponseEntity.ok(t);
     }

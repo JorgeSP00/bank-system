@@ -1,4 +1,4 @@
-package com.bank.transactionservice.event;
+package com.bank.transactionservice.event.producer;
 
 import java.util.UUID;
 

@@ -7,14 +7,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bank.accountservice.dto.request.AccountRequestDTO;
 import com.bank.accountservice.dto.response.AccountResponseDTO;
-import com.bank.accountservice.event.producer.AccountRequestedEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.bank.accountservice.exception.AccountAlreadyExists;
 import com.bank.accountservice.exception.AccountNotFound;
-import com.bank.accountservice.kafka.producer.KafkaAccountProducer;
+import com.bank.accountservice.exception.EventSerializationException;
 import com.bank.accountservice.mapper.AccountMapper;
 import com.bank.accountservice.model.account.Account;
+import com.bank.accountservice.model.outbox.OutboxEvent;
 import com.bank.accountservice.repository.AccountRepository;
-
+import com.bank.accountservice.repository.OutboxEventRepository;
+import jakarta.persistence.EntityManager;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,11 +28,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AccountService {
 
-    private final KafkaAccountProducer kafkaAccountProducer;
+    
 
     private final AccountRepository accountRepository;
+    private final OutboxEventRepository outboxEventRepository;
+    private final EntityManager entityManager;
 
     private final AccountMapper accountMapper;
+    private final ObjectMapper objectMapper;
 
     public List<AccountResponseDTO> findAllAccounts() {
         return accountRepository.findAll()
@@ -60,7 +66,7 @@ public class AccountService {
             account.setStatus(accountRequestDTO.getStatus());
             account.setBalance(accountRequestDTO.getBalance());
             Account saved = updateAccount(account);
-            sendAccountRequested(accountMapper.fromEntityToMessage(saved));
+            saveAccountUpdatedEvent(saved);
             return accountMapper.fromEntityToResponse(saved);
         } else {
             throw new AccountNotFound("Account with ID " + id + " not found");
@@ -69,7 +75,10 @@ public class AccountService {
 
     @Transactional
     public Account updateAccount(Account account) {
-        return accountRepository.save(account);
+        Account saved = accountRepository.save(account);
+        accountRepository.flush();  // Fuerza la escritura a BD
+        entityManager.refresh(saved);  // Recarga desde BD los valores reales (triggers, defaults, etc.)
+        return saved;
     }
 
     @Transactional
@@ -87,12 +96,45 @@ public class AccountService {
                 .status(accountRequestDTO.getStatus())
                 .build();
             Account saved = accountRepository.save(account);
-            sendAccountRequested(accountMapper.fromEntityToMessage(saved));
+            saveAccountCreatedEvent(saved);
             return accountMapper.fromEntityToResponse(saved);
         }
     }
 
-    private void sendAccountRequested(AccountRequestedEvent accountRequestedEvent) {
-        kafkaAccountProducer.sendAccountRequested(accountRequestedEvent);
+
+    private void saveAccountCreatedEvent(Account account) {
+        OutboxEvent outboxEvent;
+        try {
+            outboxEvent = OutboxEvent.builder()
+                .aggregateType("Account")
+                .aggregateId(account.getId())
+                .type("AccountCreatedEvent")
+                .topic("account.created")
+                .payload(objectMapper.writeValueAsString(
+                    accountMapper.fromEntityToMessage(account))
+                )
+                .build();
+        } catch (JsonProcessingException e) {
+            throw new EventSerializationException("Failed to serialize AccountCreatedEvent", e);
+        }
+        outboxEventRepository.save(outboxEvent);
+    }
+
+    private void saveAccountUpdatedEvent(Account account) {
+        OutboxEvent outboxEvent;
+        try {
+            outboxEvent = OutboxEvent.builder()
+                .aggregateType("Account")
+                .aggregateId(account.getId())
+                .type("AccountUpdatedEvent")
+                .topic("account.updated")
+                .payload(objectMapper.writeValueAsString(
+                    accountMapper.fromEntityToMessage(account))
+                )
+                .build();
+        } catch (JsonProcessingException e) {
+            throw new EventSerializationException("Failed to serialize AccountUpdatedEvent", e);
+        }
+        outboxEventRepository.save(outboxEvent);
     }
 }

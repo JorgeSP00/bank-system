@@ -4,11 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bank.transactionservice.dto.message.TransactionRequestedMessage;
 import com.bank.transactionservice.dto.request.TransactionRequestDTO;
 import com.bank.transactionservice.dto.response.TransactionResponseDTO;
-import com.bank.transactionservice.event.TransactionCompletedRequestedEvent;
-import com.bank.transactionservice.event.TransactionRequestedEvent;
-import com.bank.transactionservice.kafka.producer.KafkaTransactionProducer;
+import com.bank.transactionservice.event.producer.TransactionCompletedRequestedEvent;
 import com.bank.transactionservice.mapper.TransactionMapper;
 import com.bank.transactionservice.model.account.Account;
 import com.bank.transactionservice.model.account.AccountStatus;
@@ -20,12 +19,15 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.bank.transactionservice.exception.InvalidTransactionData;
+import com.bank.transactionservice.exception.TransactionNotFound;
+
 @Service
 @RequiredArgsConstructor
 public class TransactionService {
     private final AccountService accountService;
     private final TransactionRepository transactionRepository;
-    private final KafkaTransactionProducer kafkaTransactionProducer;
+    private final OutboxEventService outboxEventService;
     private final TransactionMapper transactionMapper;
 
     public List<TransactionResponseDTO> getAllTransactions() {
@@ -37,14 +39,15 @@ public class TransactionService {
 
     public TransactionResponseDTO getTransactionById(UUID id) {
         Transaction t = transactionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+                .orElseThrow(() -> new TransactionNotFound("Transaction with ID " + id + " not found"));
         return transactionMapper.fromEntityToResponse(t);
     }
 
     @Transactional
     public TransactionResponseDTO createTransaction(TransactionRequestDTO transactionRequestDTO) {
         Transaction t = validateTransaction(transactionRequestDTO);
-        sendTransactionRequested(transactionMapper.fromTransactionToMessage(t));
+        TransactionRequestedMessage message = mapTransactionToMessage(t);
+        saveTransactionRequestedToOutbox(t.getId(), message);
         return transactionMapper.fromEntityToResponse(t);
     }
 
@@ -52,8 +55,7 @@ public class TransactionService {
         Account fromAccount = accountService.getByAccountNumber(transactionRequestDTO.getFromAccountNumber());
         Account toAccount = accountService.getByAccountNumber(transactionRequestDTO.getToAccountNumber());
         if (!fromAccount.getStatus().equals(AccountStatus.ACTIVE) || !toAccount.getStatus().equals(AccountStatus.ACTIVE)) {
-            //error
-            throw new RuntimeException("Accounts not available");
+            throw new InvalidTransactionData("One or both accounts are not ACTIVE");
         }
         Transaction t = transactionMapper.fromRequestToEntity(transactionRequestDTO);
         t.setId(UUID.randomUUID());
@@ -67,13 +69,30 @@ public class TransactionService {
         return saved;
     }
 
-    private void sendTransactionRequested(TransactionRequestedEvent transactionRequestedEvent) {
-        kafkaTransactionProducer.sendTransactionRequested(transactionRequestedEvent);
+    private TransactionRequestedMessage mapTransactionToMessage(Transaction transaction) {
+        return new TransactionRequestedMessage(
+            transaction.getId(),
+            transaction.getFromAccount().getId(),
+            transaction.getFromAccountVersionId(),
+            transaction.getToAccount().getId(),
+            transaction.getToAccountVersionId(),
+            transaction.getAmount()
+        );
+    }
+
+    private void saveTransactionRequestedToOutbox(UUID transactionId, TransactionRequestedMessage message) {
+        outboxEventService.saveOutboxEvent(
+            "Transaction",
+            transactionId,
+            "TransactionRequestedMessage",
+            "transaction.requested",
+            message
+        );
     }
 
     public void updateTransaction(TransactionCompletedRequestedEvent transactionCompleted) {
         Transaction transaction = transactionRepository.findById(transactionCompleted.transactionId())
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+                .orElseThrow(() -> new TransactionNotFound("Transaction with ID " + transactionCompleted.transactionId() + " not found"));
         transaction.setStatus(transactionCompleted.transactionStatus());
         transaction.setObservations(transactionCompleted.observations());
         transactionRepository.save(transaction);

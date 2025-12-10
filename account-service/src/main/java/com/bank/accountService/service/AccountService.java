@@ -75,6 +75,7 @@ public class AccountService {
 
     @Transactional
     public Account updateAccount(Account account) {
+        account.setVersionId(UUID.randomUUID());
         Account saved = accountRepository.save(account);
         accountRepository.flush();  // Fuerza la escritura a BD
         entityManager.refresh(saved);  // Recarga desde BD los valores reales (triggers, defaults, etc.)
@@ -90,6 +91,7 @@ public class AccountService {
         }
         else {
             account = Account.builder()
+                .versionId(UUID.randomUUID())
                 .accountNumber(accountRequestDTO.getAccountNumber())
                 .ownerName(accountRequestDTO.getOwnerName())
                 .balance(accountRequestDTO.getBalance())

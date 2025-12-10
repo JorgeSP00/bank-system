@@ -1,17 +1,13 @@
 package com.bank.transactionservice.kafka.consumer;
 
 import com.bank.transactionservice.event.producer.TransactionCompletedRequestedEvent;
-import com.bank.transactionservice.model.transaction.TransactionStatus;
 import com.bank.transactionservice.service.TransactionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor

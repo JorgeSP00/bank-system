@@ -1,4 +1,4 @@
-package com.bank.transactionservice.kafka.consumer;
+/**package com.bank.transactionservice.kafka.consumer;
 
 import com.bank.transactionservice.event.consumer.AccountProcessedEvent;
 import com.bank.transactionservice.service.AccountService;
@@ -20,6 +20,7 @@ public class KafkaAccountConsumer {
      * - KafkaAccountCreatedConsumer
      * - KafkaAccountUpdatedConsumer
      */
+    /**
     @KafkaListener(
         topics = "account.requested", 
         groupId = "transaction-service-group",
@@ -29,4 +30,4 @@ public class KafkaAccountConsumer {
         System.out.println("📩 [Consumer] Received AccountProcessedEvent (fallback): " + event);
         accountService.saveOrUpdateFromConsumer(event);
     }
-}
+}**/
